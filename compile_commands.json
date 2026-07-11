@@ -168,9 +168,57 @@
         "output": ".pio/build/uno/libf9f/LiquidCrystal_I2C/LiquidCrystal_I2C.cpp.o"
     },
     {
+        "command": "/home/omar/.platformio/packages/toolchain-atmelavr/bin/avr-gcc -o .pio/build/uno/src/LCD.c.o -c -std=gnu11 -fno-fat-lto-objects -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DPLATFORMIO=60119 -DARDUINO_AVR_UNO -DF_CPU=16000000L -DARDUINO_ARCH_AVR -DARDUINO=10808 -Iinclude -Isrc -I.pio/libdeps/uno/LiquidCrystal_I2C -I/home/omar/.platformio/packages/framework-arduino-avr/libraries/Wire/src -I.pio/libdeps/uno/IRremote/src -I/home/omar/.platformio/packages/framework-arduino-avr/cores/arduino -I/home/omar/.platformio/packages/framework-arduino-avr/variants/standard src/LCD.c",
+        "directory": "/home/omar/git/Microcontrollers/osmart-house",
+        "file": "src/LCD.c",
+        "output": ".pio/build/uno/src/LCD.c.o"
+    },
+    {
+        "command": "/home/omar/.platformio/packages/toolchain-atmelavr/bin/avr-gcc -o .pio/build/uno/src/Music.c.o -c -std=gnu11 -fno-fat-lto-objects -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DPLATFORMIO=60119 -DARDUINO_AVR_UNO -DF_CPU=16000000L -DARDUINO_ARCH_AVR -DARDUINO=10808 -Iinclude -Isrc -I.pio/libdeps/uno/LiquidCrystal_I2C -I/home/omar/.platformio/packages/framework-arduino-avr/libraries/Wire/src -I.pio/libdeps/uno/IRremote/src -I/home/omar/.platformio/packages/framework-arduino-avr/cores/arduino -I/home/omar/.platformio/packages/framework-arduino-avr/variants/standard src/Music.c",
+        "directory": "/home/omar/git/Microcontrollers/osmart-house",
+        "file": "src/Music.c",
+        "output": ".pio/build/uno/src/Music.c.o"
+    },
+    {
         "command": "/home/omar/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/uno/src/OSmartHouse.cpp.o -c -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DPLATFORMIO=60119 -DARDUINO_AVR_UNO -DF_CPU=16000000L -DARDUINO_ARCH_AVR -DARDUINO=10808 -Iinclude -Isrc -I.pio/libdeps/uno/LiquidCrystal_I2C -I/home/omar/.platformio/packages/framework-arduino-avr/libraries/Wire/src -I.pio/libdeps/uno/IRremote/src -I/home/omar/.platformio/packages/framework-arduino-avr/cores/arduino -I/home/omar/.platformio/packages/framework-arduino-avr/variants/standard src/OSmartHouse.cpp",
         "directory": "/home/omar/git/Microcontrollers/osmart-house",
         "file": "src/OSmartHouse.cpp",
         "output": ".pio/build/uno/src/OSmartHouse.cpp.o"
+    },
+    {
+        "command": "/home/omar/.platformio/packages/toolchain-atmelavr/bin/avr-gcc -o .pio/build/uno/src/RGBLED.c.o -c -std=gnu11 -fno-fat-lto-objects -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DPLATFORMIO=60119 -DARDUINO_AVR_UNO -DF_CPU=16000000L -DARDUINO_ARCH_AVR -DARDUINO=10808 -Iinclude -Isrc -I.pio/libdeps/uno/LiquidCrystal_I2C -I/home/omar/.platformio/packages/framework-arduino-avr/libraries/Wire/src -I.pio/libdeps/uno/IRremote/src -I/home/omar/.platformio/packages/framework-arduino-avr/cores/arduino -I/home/omar/.platformio/packages/framework-arduino-avr/variants/standard src/RGBLED.c",
+        "directory": "/home/omar/git/Microcontrollers/osmart-house",
+        "file": "src/RGBLED.c",
+        "output": ".pio/build/uno/src/RGBLED.c.o"
+    },
+    {
+        "command": "/home/omar/.platformio/packages/toolchain-atmelavr/bin/avr-gcc -o .pio/build/uno/src/Remote.c.o -c -std=gnu11 -fno-fat-lto-objects -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DPLATFORMIO=60119 -DARDUINO_AVR_UNO -DF_CPU=16000000L -DARDUINO_ARCH_AVR -DARDUINO=10808 -Iinclude -Isrc -I.pio/libdeps/uno/LiquidCrystal_I2C -I/home/omar/.platformio/packages/framework-arduino-avr/libraries/Wire/src -I.pio/libdeps/uno/IRremote/src -I/home/omar/.platformio/packages/framework-arduino-avr/cores/arduino -I/home/omar/.platformio/packages/framework-arduino-avr/variants/standard src/Remote.c",
+        "directory": "/home/omar/git/Microcontrollers/osmart-house",
+        "file": "src/Remote.c",
+        "output": ".pio/build/uno/src/Remote.c.o"
+    },
+    {
+        "command": "/home/omar/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/uno/src/Sensor.cpp.o -c -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DPLATFORMIO=60119 -DARDUINO_AVR_UNO -DF_CPU=16000000L -DARDUINO_ARCH_AVR -DARDUINO=10808 -Iinclude -Isrc -I.pio/libdeps/uno/LiquidCrystal_I2C -I/home/omar/.platformio/packages/framework-arduino-avr/libraries/Wire/src -I.pio/libdeps/uno/IRremote/src -I/home/omar/.platformio/packages/framework-arduino-avr/cores/arduino -I/home/omar/.platformio/packages/framework-arduino-avr/variants/standard src/Sensor.cpp",
+        "directory": "/home/omar/git/Microcontrollers/osmart-house",
+        "file": "src/Sensor.cpp",
+        "output": ".pio/build/uno/src/Sensor.cpp.o"
+    },
+    {
+        "command": "/home/omar/.platformio/packages/toolchain-atmelavr/bin/avr-gcc -o .pio/build/uno/src/Speaker.c.o -c -std=gnu11 -fno-fat-lto-objects -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DPLATFORMIO=60119 -DARDUINO_AVR_UNO -DF_CPU=16000000L -DARDUINO_ARCH_AVR -DARDUINO=10808 -Iinclude -Isrc -I.pio/libdeps/uno/LiquidCrystal_I2C -I/home/omar/.platformio/packages/framework-arduino-avr/libraries/Wire/src -I.pio/libdeps/uno/IRremote/src -I/home/omar/.platformio/packages/framework-arduino-avr/cores/arduino -I/home/omar/.platformio/packages/framework-arduino-avr/variants/standard src/Speaker.c",
+        "directory": "/home/omar/git/Microcontrollers/osmart-house",
+        "file": "src/Speaker.c",
+        "output": ".pio/build/uno/src/Speaker.c.o"
+    },
+    {
+        "command": "/home/omar/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/uno/src/Temperaturmesser.cpp.o -c -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DPLATFORMIO=60119 -DARDUINO_AVR_UNO -DF_CPU=16000000L -DARDUINO_ARCH_AVR -DARDUINO=10808 -Iinclude -Isrc -I.pio/libdeps/uno/LiquidCrystal_I2C -I/home/omar/.platformio/packages/framework-arduino-avr/libraries/Wire/src -I.pio/libdeps/uno/IRremote/src -I/home/omar/.platformio/packages/framework-arduino-avr/cores/arduino -I/home/omar/.platformio/packages/framework-arduino-avr/variants/standard src/Temperaturmesser.cpp",
+        "directory": "/home/omar/git/Microcontrollers/osmart-house",
+        "file": "src/Temperaturmesser.cpp",
+        "output": ".pio/build/uno/src/Temperaturmesser.cpp.o"
+    },
+    {
+        "command": "/home/omar/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/uno/src/Zeitmesser.cpp.o -c -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DPLATFORMIO=60119 -DARDUINO_AVR_UNO -DF_CPU=16000000L -DARDUINO_ARCH_AVR -DARDUINO=10808 -Iinclude -Isrc -I.pio/libdeps/uno/LiquidCrystal_I2C -I/home/omar/.platformio/packages/framework-arduino-avr/libraries/Wire/src -I.pio/libdeps/uno/IRremote/src -I/home/omar/.platformio/packages/framework-arduino-avr/cores/arduino -I/home/omar/.platformio/packages/framework-arduino-avr/variants/standard src/Zeitmesser.cpp",
+        "directory": "/home/omar/git/Microcontrollers/osmart-house",
+        "file": "src/Zeitmesser.cpp",
+        "output": ".pio/build/uno/src/Zeitmesser.cpp.o"
     }
 ]
