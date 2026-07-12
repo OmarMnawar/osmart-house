@@ -52,7 +52,7 @@ namespace Lcd {
         InTemperatureMenu,
         InMusicMenu,
         InRgbLedMenu,
-        TurningOff
+        ShuttingOff
     };
 
     extern PowerState current_power_state;
