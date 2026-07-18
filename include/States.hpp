@@ -49,7 +49,7 @@ namespace Lcd {
         ShowingWelcomeMessage,
         Idle,
         InMainMenu,
-        InTemperatureMenu,
+        InThermometerMenu,
         InMusicMenu,
         InRgbLedMenu,
         ShuttingOff

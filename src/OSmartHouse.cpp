@@ -2,6 +2,7 @@
 #include "LCD.hpp"
 #include "Sensor.hpp"
 #include "Remote.hpp"
+#include "Thermometer.hpp"
 
 
 void setup()
@@ -16,4 +17,5 @@ void loop()
   Sensor::update_state();
   Remote::update_buttons();
   Lcd::logic();
+  Thermometer::update_thermometer();
 }
