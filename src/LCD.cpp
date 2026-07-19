@@ -1,6 +1,9 @@
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
+#include <avr/io.h>
 #include "Arduino.h"
+#include "Inputs.hpp"
+#include "LED.hpp"
 #include "States.hpp"
 #include "Outputs.hpp"
 #include "LCD.hpp"
@@ -30,6 +33,7 @@ namespace Lcd {
 
     Menu main_menu = { 1, 4, true };
     Menu thermometer_menu = {0, 0 , true };
+    Menu music_menu = {1, 2, true };
     
     void on_and_off();
     void turn_off();
@@ -37,6 +41,8 @@ namespace Lcd {
     void idle();
     void in_main_menu(Menu &menu);
     void in_thermometer_menu(Menu &menu);
+    void in_music_menu(Menu &menu);
+    void in_rgb_led_menu(Menu &menu);
     bool menu_closed(Menu &menu, State target_state);
     void update_menu_inputs(Menu &menu);
     void shutting_off();
@@ -84,11 +90,22 @@ namespace Lcd {
         B10001,
         B10001
     };
+     uint8_t degree_symbol_binary[] = {
+        B01100,
+        B10010,
+        B10010,
+        B01100,
+        B00000,
+        B00000,
+        B00000,
+        B00000
+    };
 
     uint8_t arrow = 0;
     uint8_t filled_pole = 1;
     uint8_t top_pole = 2;
     uint8_t bottom_pole = 3;
+    uint8_t degree_symbol = 4;
 
 
     void init() {
@@ -97,6 +114,7 @@ namespace Lcd {
         lcd.createChar(filled_pole, filled_pole_binary);
         lcd.createChar(top_pole, top_pole_binary);
         lcd.createChar(bottom_pole, bottom_pole_binary);
+        lcd.createChar(degree_symbol, degree_symbol_binary);
 
     }
 
@@ -111,9 +129,11 @@ namespace Lcd {
 
             if (Sensor::current_state != Sensor::States::MovementDetected && Remote::current_button != Remote::Buttons::OnOrOff)
             {
+                LED::orange_led(LED::Mode::Constant);
                 return;
             }
-
+            LED::orange_led(LED::Off);
+            LED::blue_led(LED::Mode::Constant);
             lcd.display();
             lcd.backlight();
             current_power_state = PowerState::On;
@@ -168,7 +188,7 @@ namespace Lcd {
             break;
 
             case State::InMusicMenu:
-
+                in_music_menu(music_menu);
             break;
 
             case State::InRgbLedMenu:
@@ -188,12 +208,17 @@ namespace Lcd {
         lcd.noBacklight();
         current_power_state = PowerState::Off;
         current_state = State::NoAction;
+        LED::blue_led(LED::Off);
     }
 
 
     void in_main_menu(Menu &menu) {
 
         update_menu_inputs(menu);
+        
+        if (menu_closed(menu, State::Idle)) {
+            return;
+        }
 
         if (menu.option_clicked == true) {
 
@@ -216,9 +241,6 @@ namespace Lcd {
             }
         }
 
-        if (menu_closed(menu, State::Idle)) {
-            return;
-        }
 
         if (menu.needs_refresh == true) {
 
@@ -255,6 +277,66 @@ namespace Lcd {
             lcd.setCursor(0, 1);
             menu.needs_refresh = false;
             lcd.print(Thermometer::temperature_celsius);
+            lcd.write(degree_symbol);
+        }
+    }
+
+    void in_music_menu(Menu &menu) {
+        update_menu_inputs(menu);
+
+        if (menu_closed(menu, State::InMainMenu)) {
+            return;
+        }
+
+        if (menu.option_clicked == true) {
+            switch  (menu.current_pos) {
+                case 1:
+                    // OM ToDo: Put the music playing here.
+                break;
+    
+                case 2:
+
+                break;
+            }
+        }
+
+        if (menu.needs_refresh == true) {
+            if (menu.current_pos == 1 || menu.current_pos == 2) {
+                menu_logic("Fuer Elise", "Harry Potter", menu.current_pos, menu.options_size);
+            }
+        }
+    }
+
+
+    void in_rgb_led_menu(Menu &menu) {
+        update_menu_inputs(menu);
+
+        if (menu_closed(menu, State::InMainMenu)) {
+            return;
+        }
+
+        if (menu.option_clicked == true) {
+            switch (menu.current_pos) {
+                case 1:
+
+                break;
+
+                case 2:
+
+                break;
+
+                case 3:
+
+                break;
+
+                case 4:
+                // OM ToDo: Custom RGB Color.
+                break;
+
+                case 5:
+                // OM ToDo: Disable RGB Colors update when using remote.
+                break;
+            }
         }
     }
 
@@ -376,7 +458,7 @@ namespace Lcd {
                 if (Remote::current_button != Remote::Buttons::OnOrOff) {
                     current_state = State::InMainMenu;
                 }
-                return;
+                break;
             }
 
             // OM: Message always gets printed with 75% value of given delay time.
