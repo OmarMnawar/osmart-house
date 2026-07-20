@@ -51,7 +51,7 @@ namespace Lcd {
         InMainMenu,
         InThermometerMenu,
         InMusicMenu,
-        InRgbLedMenu,
+        InLedsMenu,
         ShuttingOff
     };
 
