@@ -13,10 +13,10 @@ namespace Sensor {
 
 	void update_state() {
 		if (digitalRead(Pins::SENSOR_PIN)) {
-		current_state = States::MovementDetected;
+			current_state = States::MovementDetected;
 		}
 		else {
-		current_state = States::NoMovementDetected;
+			current_state = States::NoMovementDetected;
 		}
 	}
 }

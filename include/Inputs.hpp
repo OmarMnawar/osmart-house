@@ -11,6 +11,7 @@ namespace Pins {
     constexpr uint8_t LED_PINS[3] = { LED_RED_PIN, LED_GREEN_PIN, LED_BLUE_PIN };
     constexpr uint8_t LED_BLUE_ON_PIN = 5;
     constexpr uint8_t LED_ORANGE_OFF_PIN = 3;
+    constexpr uint8_t LED_WHITE_PIN = 13;
 }
 
 #endif

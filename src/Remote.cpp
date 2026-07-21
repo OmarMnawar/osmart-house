@@ -1,6 +1,7 @@
 #include "Remote.hpp"
 #include <Arduino.h>
 #include "Inputs.hpp"
+#include "Print.h"
 #include "States.hpp"
 #include "Timer.hpp"
 #include <IRremote.hpp>
@@ -45,15 +46,13 @@ namespace Remote {
 			    current_button = Buttons::Confirm;
 			    break;
 			
+			    case 0x98:
+			    current_button = Buttons::Minus;
+			    break; 
 			
 			    case 0x68:
 			    current_button = Buttons::Number0;
 			    break;
-			
-			    case 0x98:
-			    current_button = Buttons::Minus;
-			    break; 
-
 
 			    case 0x30:
 			    current_button = Buttons::Number1;
@@ -66,10 +65,29 @@ namespace Remote {
 			    case 0x7A:
 			    current_button = Buttons::Number3;
 			    break;
-
       			
                 case 0x10:
 			    current_button = Buttons::Number4;
+			    break;
+
+				case 0x38:
+			    current_button = Buttons::Number5;
+			    break;
+
+				case 0x5A:
+			    current_button = Buttons::Number6;
+			    break;
+
+				case 0x42:
+			    current_button = Buttons::Number7;
+			    break;
+
+				case 0x4A:
+			    current_button = Buttons::Number8;
+			    break;
+
+				case 0x52:
+			    current_button = Buttons::Number9;
 			    break;
 
 		    }

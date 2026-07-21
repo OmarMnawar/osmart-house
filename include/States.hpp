@@ -30,33 +30,15 @@ namespace Remote {
 		Number1,
 		Number2,
 		Number3,
-		Number4
+		Number4,
+        Number5,
+        Number6,
+        Number7,
+        Number8,
+        Number9,
 	};
 
     extern Buttons current_button;
-}
-
-namespace Lcd {
-    enum class PowerState
-    {
-        Off,
-        On,
-    };
-
-    enum class State
-    {
-        NoAction,
-        ShowingWelcomeMessage,
-        Idle,
-        InMainMenu,
-        InThermometerMenu,
-        InMusicMenu,
-        InLedsMenu,
-        ShuttingOff
-    };
-
-    extern PowerState current_power_state;
-    extern State current_state;
 }
 
 #endif

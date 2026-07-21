@@ -18,7 +18,7 @@ void loop()
 {
   Sensor::update_state();
   Remote::update_buttons();
+  LEDS::logic();
   Lcd::logic();
   Thermometer::update_thermometer();
-  LEDS::logic();
 }

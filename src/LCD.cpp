@@ -16,6 +16,7 @@ namespace Lcd {
     State current_state = State::NoAction;
     constexpr uint32_t MESSAGE_DELAY_TIME = 500;
     LiquidCrystal_I2C lcd(Config::LCD_ADDRESS, Config::LCD_WIDTH, Config::LCD_HEIGHT); 
+    uint32_t last_interaction_with_lcd = 0;
 
     struct Menu  {
         uint8_t current_pos = 1;
@@ -34,8 +35,10 @@ namespace Lcd {
     Menu main_menu = { 1, 4, true };
     Menu thermometer_menu = {0, 0 , true };
     Menu music_menu = {1, 2, true };
-    Menu leds_menu = { 1, 8, true };
-    
+    Menu leds_menu = { 1, 6, true };
+    Menu turn_on_menu = { 1, 4, true };
+    Menu turn_off_menu = { 1, 4, true };
+
     void on_and_off();
     void turn_off();
     void welcoming();
@@ -44,12 +47,15 @@ namespace Lcd {
     void in_thermometer_menu(Menu &menu);
     void in_music_menu(Menu &menu);
     void in_leds_menu(Menu &menu);
-    bool menu_closed(Menu &menu, State target_state);
+    void in_turn_on_menu(Menu &menu);
+    void in_turn_off_menu(Menu &menu);
+    void in_leds_state_menu(Menu &menu);
+    bool menu_closed(Menu &menu, State target_state, Menu* target_menu = nullptr);
     void update_menu_inputs(Menu &menu);
     void shutting_off();
-    void message_scroll(const char *message, uint8_t start_col = 0, uint8_t start_row = 0, uint32_t delay_time = MESSAGE_DELAY_TIME);
-    void message(const char *message, uint8_t col_pos, uint8_t row_pos, bool repeat = true, uint32_t delay_time = MESSAGE_DELAY_TIME);
-    void menu_logic(const char *first_option, const char *second_option, uint8_t current_pos, uint8_t menu_size);
+    void draw_scrolling_message(const char *message, uint8_t start_col = 0, uint8_t start_row = 0, uint32_t delay_time = MESSAGE_DELAY_TIME);
+    void draw_message(const char *message, uint8_t col_pos, uint8_t row_pos, bool repeat = true, uint32_t delay_time = MESSAGE_DELAY_TIME);
+    void draw_menu(const char *first_option, const char *second_option, uint8_t current_pos, uint8_t menu_size);
     
     uint8_t arrow_binary[] = {
         B01000,
@@ -116,52 +122,42 @@ namespace Lcd {
         lcd.createChar(top_pole, top_pole_binary);
         lcd.createChar(bottom_pole, bottom_pole_binary);
         lcd.createChar(degree_symbol, degree_symbol_binary);
-
     }
 
     void logic() {
-        on_and_off();        
+        on_and_off();
         states();
     }
 
     void on_and_off() {
 
-        if (current_power_state != PowerState::On) {
+        if (current_power_state == PowerState::Off) {
 
-            if (Sensor::current_state != Sensor::States::MovementDetected && Remote::current_button != Remote::Buttons::OnOrOff)
+            if (Remote::current_button != Remote::Buttons::OnOrOff)
             {
-                LEDS::turn_on(&LEDS::orange_led);
+                if (LEDS::orange_led.manually_turned_off == false) {
+                    LEDS::orange_led.current_mode = LEDS::LEDMode::On;
+                }
                 return;
             }
-            LEDS::turn_off(&LEDS::orange_led);
-            LEDS::turn_on(&LEDS::blue_led);
+            if (LEDS::orange_led.manually_turned_on == false) {
+                LEDS::orange_led.current_mode = LEDS::LEDMode::Off;
+            }
+            if (LEDS::blue_led.manually_turned_off == false) {
+                LEDS::blue_led.current_mode = LEDS::LEDMode::On;
+            }
             lcd.display();
             lcd.backlight();
             current_power_state = PowerState::On;
             current_state = State::ShowingWelcomeMessage;
         }
-        else if (current_power_state == PowerState::On) {
-
-            if (Remote::current_button == Remote::Buttons::OnOrOff)
-            {
-                if (Sensor::current_state != Sensor::States::MovementDetected)
-                {
-                    current_state = State::ShuttingOff;
-                }
-                
-            }
-            else if (Sensor::current_state == Sensor::States::MovementDetected) {
-                if (Remote::current_button != Remote::Buttons::OnOrOff)
-                {
-                    current_state = State::ShuttingOff;
-                }
-            }
+        else if (current_power_state == PowerState::On && Remote::current_button == Remote::Buttons::OnOrOff) {
+            current_state = State::ShuttingOff;
         }
     }
 
     void states() {
         if (current_power_state == PowerState::Off) {
-            current_state = State::NoAction;
             return;
         }
 
@@ -172,12 +168,12 @@ namespace Lcd {
             break;
 
             case State::ShowingWelcomeMessage:
-                message_scroll("Welcome!");
+                draw_scrolling_message("Welcome!");
                 current_state = State::Idle;
             break;
             
             case State::Idle:
-                message("Press Any button!", 2, 0);
+                draw_message("Press Any button!", 2, 0);
             break;
             
             case State::InMainMenu:
@@ -192,78 +188,89 @@ namespace Lcd {
                 in_music_menu(music_menu);
             break;
 
+            case State::InTurnOnMenu:
+                in_turn_on_menu(turn_on_menu);
+            break;
+
+            case State::InTurnOffMenu:
+                in_turn_off_menu(turn_off_menu);
+            break;
+
             case State::InLedsMenu:
                 in_leds_menu(leds_menu);
             break;
 
             case State::ShuttingOff:
                 delay(150);
-                message("Shutting Off!", 2, 0, false, 2000);
+                draw_message("Shutting Off!", 2, 0, false);
                 turn_off();
             break;
         }
     }
-
 
     void turn_off() {
         lcd.noDisplay();
         lcd.noBacklight();
         current_power_state = PowerState::Off;
         current_state = State::NoAction;
-        LEDS::turn_off(&LEDS::blue_led);
+
+        if (LEDS::blue_led.manually_turned_on == false) {
+            LEDS::blue_led.current_mode = LEDS::LEDMode::Off;
+        }
     }
 
     void in_main_menu(Menu &menu) {
-
         
         if (menu_closed(menu, State::Idle)) {
             return;
         }
         
-        if (menu.option_clicked == true) {
-            
-            switch (menu.current_pos) {
-                case 1:
-                current_state = State::InThermometerMenu;
-                return;
-                
-                case 2:
-                current_state = State::InMusicMenu;
-                return;
-                
-                case 3:
-                current_state = State::InLedsMenu;
-                return;
-                
-                case 4:
-                current_state = State::ShuttingOff;
-                return;
-            }
-        }
-        
-        
         if (menu.needs_refresh == true) {
             
             if (menu.current_pos == 1 || menu.current_pos == 2)
             {
-                menu_logic("Thermometer", "Music", menu.current_pos, menu.options_size);
+                draw_menu("Thermometer", "Music", menu.current_pos, menu.options_size);
                 
             }
             else if (menu.current_pos == 3 || menu.current_pos == 4)
             {
-                menu_logic("LEDs", "Shutdown", menu.current_pos, menu.options_size);
+                draw_menu("LEDs", "Shutdown", menu.current_pos, menu.options_size);
             }
             
             menu.needs_refresh = false;
         }
+        
+        if (menu.option_clicked == true) {
+            switch (static_cast<MainMenuOptions>(menu.current_pos)) {
+                case Lcd::MainMenuOptions::Thermometer:
+                current_state = State::InThermometerMenu;
+                break;
+                
+                case Lcd::MainMenuOptions::Music:
+                current_state = State::InMusicMenu;
+                break;;
+                
+                case Lcd::MainMenuOptions::LEDs:
+                current_state = State::InLedsMenu;
+                break;
+                
+                case Lcd::MainMenuOptions::Shutdown:
+                Serial.print(F("auto shutdown"));
+                menu.needs_refresh = true;
+                menu.current_pos = 1;
+                current_state = State::ShuttingOff;
+                break;
+            }
 
+            menu.option_clicked = false;
+        }
+        
         update_menu_inputs(menu);
     }
-
+    
     void in_thermometer_menu(Menu &menu) {
-
         
-        if (menu_closed(menu, State::InMainMenu)) {
+        if (menu_closed(menu, State::InMainMenu, &main_menu)) {
             return;
         }
         
@@ -280,108 +287,207 @@ namespace Lcd {
             lcd.print(Thermometer::temperature_celsius);
             lcd.write(degree_symbol);
         }
-
+        
         update_menu_inputs(menu);
     }
     
     void in_music_menu(Menu &menu) {
-        
-        if (menu_closed(menu, State::InMainMenu)) {
+
+        if (menu_closed(menu, State::InMainMenu, &main_menu)) {
             return;
         }
         
-        if (menu.option_clicked == true) {
-            switch  (menu.current_pos) {
-                case 1:
-                // OM ToDo: Put the music playing here.
-                break;
-                
-                case 2:
-                
-                break;
-            }
-        }
         
         if (menu.needs_refresh == true) {
             if (menu.current_pos == 1 || menu.current_pos == 2) {
-                menu_logic("Fuer Elise", "Harry Potter", menu.current_pos, menu.options_size);
+                draw_menu("Fuer Elise", "Harry Potter", menu.current_pos, menu.options_size);
             }
             menu.needs_refresh = false;
         }
+
+        if (menu.option_clicked == true) {
+            switch  (static_cast<MusicMenuOptions>(menu.current_pos)) {
+                case Lcd::MusicMenuOptions::FuerElise:
+                // OM ToDo: Put the music playing here.
+                break;
+                
+                case Lcd::MusicMenuOptions::HarryPotter:
+                // OM ToDo: Put the music playing here.
+                break;
+            }
+
+            menu.option_clicked = false;
+        }
+        
         update_menu_inputs(menu);
     }
-
+    
 
     void in_leds_menu(Menu &menu) {
+
         
-        if (menu_closed(menu, State::InMainMenu)) {
+        if (menu_closed(menu, State::InMainMenu, &main_menu)) {
             return;
         }
         
-        if (menu.option_clicked == true) {
-
-            switch (menu.current_pos) {
-                case 1:
-
-                break;
-                
-                case 2:
-                    LEDS::turn_off();
-                    message("RGB is off", 2, 1, false);
-                break;
-                
-                case 3:
-                    
-                break;
-                
-                case 4:
-                // OM ToDo: Custom RGB Color.
-                break;
-                
-                case 5:
-                // OM ToDo: Disable RGB Colors update when using remote.
-                break;
-                
-                case 6:
-                // OM ToDo: Disable RGB Colors update when using remote.
-                break;
-                
-                case 7:
-                // OM ToDo: Disable RGB Colors update when using remote.
-                break;
-                
-                case 8:
-                // OM ToDo: Disable RGB Colors update when using remote.
-                break;
-            }
-        }
         
         if (menu.needs_refresh == true) {
             
             if (menu.current_pos == 1 || menu.current_pos == 2) {
-                menu_logic("RGB On", "RGB Off", menu.current_pos, menu.options_size);
+                draw_menu("Turn On", "Turn Off", menu.current_pos, menu.options_size);
             }
             else if (menu.current_pos == 3 || menu.current_pos == 4) {
-                menu_logic("RGB Colors", "RGB C and Mode", menu.current_pos, menu.options_size);
+                draw_menu("LED state", "RGB state", menu.current_pos, menu.options_size);
             }
             else if (menu.current_pos == 5 || menu.current_pos == 6) {
-                menu_logic("RGB Mode", "Blue Led mode", menu.current_pos, menu.options_size);
+                draw_menu("Change color", "Fade duration", menu.current_pos, menu.options_size);
             }
-            else if (menu.current_pos == 7 || menu.current_pos == 8) {
-                menu_logic("Orange Led mode", "Fade duration", menu.current_pos, menu.options_size);
-            }    
             menu.needs_refresh = false;
         }
+        
+        if (menu.option_clicked == true) {
+            switch (static_cast<LedsOptions>(menu.current_pos)) {
+                case Lcd::LedsOptions::TurnOn:
+                    current_state = State::InTurnOnMenu;
+                break;
+                
+                case Lcd::LedsOptions::TurnOff:
+                    current_state = State::InTurnOffMenu;
+                break;
+                
+                case Lcd::LedsOptions::ChangeLEDState:
+                    // OM ToDo: Build the menu für choosing which led and state to set.
+                break;
+                
+                case Lcd::LedsOptions::ChangeRGBState:
+                    // OM ToDo: Build the menu für choosing which rgb and state to set.
+                break;
+                
+                case Lcd::LedsOptions::ChangeColor:
+                    // OM ToDo: Build the menu für choosing the new RGB Colors.
+                break;
+                
+                case Lcd::LedsOptions::ChangeFadeDuration:
+                    // OM ToDo: Build the menu für choosing the new fade duration and for which led.
+                break;
 
+                case Lcd::LedsOptions::ResetAll:
+                    LEDS::reset_all();
+                break;
+            }
+    
+            menu.option_clicked = false;
+        }
         update_menu_inputs(menu);
     }
     
-    bool menu_closed(Menu &menu, State target_state) {
+    void in_turn_on_menu(Menu &menu) {
+        if (menu_closed(menu, State::InLedsMenu, &leds_menu)) {
+            return;
+        } 
+        
+        if (menu.needs_refresh == true) {
+            if (menu.current_pos == 1 || menu.current_pos == 2) {
+                draw_menu("Orange LED", "Blue LED", menu.current_pos, menu.options_size);
+            }
+            else if (menu.current_pos == 3 || menu.current_pos == 4) {
+                draw_menu("White LED", "RGB LED", menu.current_pos, menu.options_size);
+            }
+            menu.needs_refresh = false;
+        }
+
+        if (menu.option_clicked == true) {
+            switch (static_cast<AvailableLEDsOptions>(menu.current_pos)) {
+                case Lcd::AvailableLEDsOptions::OrangeLED:
+                    LEDS::orange_led.current_mode = LEDS::LEDMode::On;
+                    LEDS::orange_led.manually_turned_on = true;
+                break;
+                
+                case Lcd::AvailableLEDsOptions::BlueLED:
+                    LEDS::blue_led.current_mode = LEDS::LEDMode::On;
+                    LEDS::blue_led.manually_turned_on = true;
+                break;
+                
+                case Lcd::AvailableLEDsOptions::WhiteLED:
+                    LEDS::white_led.current_mode = LEDS::LEDMode::On;
+                    LEDS::white_led.manually_turned_on = true;
+                break;
+                case Lcd::AvailableLEDsOptions::RGBLED:
+                    LEDS::rgb_led.current_mode = LEDS::RGBMode::Constant;
+                    LEDS::rgb_led.manually_turned_on = true;
+                break;
+            }
+
+            menu.option_clicked = false;
+        }
+        
+        update_menu_inputs(menu);
+    }
+    
+    void in_turn_off_menu(Menu &menu) {
+        
+        if (menu_closed(menu, State::InLedsMenu, &leds_menu)) {
+            return;
+        } 
+        
+        if (menu.needs_refresh == true) {
+            if (menu.current_pos == 1 || menu.current_pos == 2) {
+                draw_menu("Orange LED", "Blue LED", menu.current_pos, menu.options_size);
+            }
+            else if (menu.current_pos == 3 || menu.current_pos == 4) {
+                draw_menu("RGB LED", "White LED", menu.current_pos, menu.options_size);
+            }
+            menu.needs_refresh = false;
+        }
+        
+        if (menu.option_clicked == true) {
+            switch (static_cast<AvailableLEDsOptions>(menu.current_pos)) {
+                case Lcd::AvailableLEDsOptions::OrangeLED:
+                    LEDS::orange_led.current_mode = LEDS::LEDMode::Off;
+                    LEDS::orange_led.manually_turned_off = true;
+                break;
+                
+                case Lcd::AvailableLEDsOptions::BlueLED:
+                    LEDS::blue_led.current_mode = LEDS::LEDMode::Off;
+                    LEDS::blue_led.manually_turned_off = true;
+                break;
+                
+                case Lcd::AvailableLEDsOptions::WhiteLED:
+                    LEDS::white_led.current_mode = LEDS::LEDMode::Off;
+                    LEDS::white_led.manually_turned_off = true;
+                break;
+                case Lcd::AvailableLEDsOptions::RGBLED:
+                    LEDS::rgb_led.current_mode = LEDS::RGBMode::Off;
+                    LEDS::rgb_led.manually_turned_off = true;
+                break;
+            }
+    
+            menu.option_clicked = false;
+        }
+        update_menu_inputs(menu);
+    }
+    
+    bool menu_closed(Menu &menu, State target_state, Menu* target_menu) {
         if (menu.menu_existed == true) {
             lcd.clear();
             current_state = target_state;
             menu.needs_refresh = true;
             menu.menu_existed = false;
+
+            if (menu.options_size > 0) {
+                menu.current_pos = 1;
+            }
+            
+            if (target_menu != nullptr){
+                target_menu->option_clicked = false;
+                target_menu->menu_existed = false;
+                target_menu->needs_refresh = true;
+
+                if (target_menu->options_size > 0) {
+                    target_menu->current_pos = 1;
+                }
+            }
+
             return true;
         }
         return false;
@@ -419,16 +525,13 @@ namespace Lcd {
         }
     }
 
-    void menu_logic(const char *first_option, const char *second_option, uint8_t current_pos, uint8_t menu_size)
+    void draw_menu(const char *first_option, const char *second_option, uint8_t current_pos, uint8_t menu_size)
     {
         lcd.clear();
 
         uint8_t arrow_pos = (current_pos % 2 != 0) ? 0 : 1;
-        uint8_t total_pairs = (menu_size + 1) / 2;
-        uint8_t current_pair = (current_pos + 1) / 2;
         uint8_t top_char;
-        uint8_t bottom_char;
-
+        
         lcd.setCursor(0, 0);
         if (arrow_pos == 0)
         {
@@ -442,6 +545,14 @@ namespace Lcd {
         }
         lcd.print(second_option);
 
+        // OM: We exit since there is only two options.
+        if (menu_size <= 2) {
+            return;
+        }
+        
+        uint8_t total_pairs = (menu_size + 1) / 2;
+        uint8_t current_pair = (current_pos + 1) / 2;
+        uint8_t bottom_char;
         uint8_t lcd_width_end = Config::LCD_WIDTH - 1;
         if (current_pair == 1) {
             top_char = top_pole;
@@ -462,37 +573,39 @@ namespace Lcd {
     }
     
     
-    void message_scroll(const char *message, uint8_t start_col, uint8_t start_row, uint32_t delay_time) {
+    void draw_scrolling_message(const char *message, uint8_t start_col, uint8_t start_row, uint32_t delay_time) {
 
-        do {
+        if (start_col < Config::LCD_WIDTH) {
+
             if (Remote::current_button != Remote::Buttons::None) {
                 lcd.clear();
                 // OM ToDo: later make this actually gets back to the current menu
                 if (Remote::current_button != Remote::Buttons::OnOrOff) {
                     current_state = State::InMainMenu;
                 }
-                break;
             }
+            
+            uint32_t last_print_time = millis();
 
-            Timer::start();
             lcd.clear();
             lcd.setCursor(start_col, start_row);
             lcd.print(message);
-            // OM ToDo: we should convert this to also use millis instead of blocking the arduin microcontroller.
-            delay(delay_time);
+            if (millis() - last_print_time >= delay_time) {
+                
+            }
+            
             lcd.clear();
             lcd.setCursor(start_col, start_row);
             lcd.print(" ");
-            Timer::stop();
             start_col++;
-            
-        } while(start_col < Config::LCD_WIDTH);
-        
+
+        }
+
         lcd.clear();
         lcd.setCursor(0, 0);
     }
 
-    void message(const char *message, uint8_t col_pos, uint8_t row_pos, bool repeat, uint32_t delay_time) {
+    void draw_message(const char *message, uint8_t col_pos, uint8_t row_pos, bool repeat, uint32_t delay_time) {
         // OM ToDo: later make the message actually appear based on the lentgh of the message.
         bool text_visible = true;
         uint32_t last_blink_time = millis();
