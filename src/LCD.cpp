@@ -9,6 +9,7 @@
 #include "LCD.hpp"
 #include "Thermometer.hpp"
 #include "Timer.hpp"
+#include "WString.h"
 
 namespace Lcd {
         
@@ -38,6 +39,18 @@ namespace Lcd {
     Menu leds_menu = { 1, 6, true };
     Menu turn_on_menu = { 1, 4, true };
     Menu turn_off_menu = { 1, 4, true };
+    Menu change_led_state_menu = { 1, 4, true };
+    Menu led_state_menu = { 1, 4, true };
+    Menu rgb_led_state_menu = { 1, 6, true };
+    Menu color_change_menu = { 1, 6, true };
+    Menu red_stage = { 0, 0, true };
+    Menu green_stage = { 0, 0, true };
+    Menu blue_stage = { 0, 0, true };
+
+    ColorStages current_stage = ColorStages::Red;
+
+    LEDS::SimpleLED* target_led = nullptr;
+    LEDS::RGBLED* target_rgb_led = nullptr;
 
     void on_and_off();
     void turn_off();
@@ -49,13 +62,17 @@ namespace Lcd {
     void in_leds_menu(Menu &menu);
     void in_turn_on_menu(Menu &menu);
     void in_turn_off_menu(Menu &menu);
-    void in_leds_state_menu(Menu &menu);
+    void in_led_state_menu(Menu &menu);
+    void in_rgb_led_state_menu(Menu &menu);
+    void in_change_led_state_menu(Menu &menu);
+    void in_color_change_menu(Menu &menu);
+    void in_colors_change_stage(Menu &menu);
     bool menu_closed(Menu &menu, State target_state, Menu* target_menu = nullptr);
     void update_menu_inputs(Menu &menu);
     void shutting_off();
-    void draw_scrolling_message(const char *message, uint8_t start_col = 0, uint8_t start_row = 0, uint32_t delay_time = MESSAGE_DELAY_TIME);
-    void draw_message(const char *message, uint8_t col_pos, uint8_t row_pos, bool repeat = true, uint32_t delay_time = MESSAGE_DELAY_TIME);
-    void draw_menu(const char *first_option, const char *second_option, uint8_t current_pos, uint8_t menu_size);
+    void draw_scrolling_message(const __FlashStringHelper *message, uint8_t start_col = 0, uint8_t start_row = 0, uint32_t delay_time = MESSAGE_DELAY_TIME);
+    void draw_message(const __FlashStringHelper *message, uint8_t col_pos, uint8_t row_pos, bool repeat = true, uint32_t delay_time = MESSAGE_DELAY_TIME);
+    void draw_menu(const __FlashStringHelper *first_option, const __FlashStringHelper *second_option = nullptr, uint8_t current_pos = 0, uint8_t menu_size = 0);
     
     uint8_t arrow_binary[] = {
         B01000,
@@ -114,7 +131,7 @@ namespace Lcd {
     uint8_t bottom_pole = 3;
     uint8_t degree_symbol = 4;
 
-
+    #pragma region Init
     void init() {
         lcd.init();
         lcd.createChar(arrow, arrow_binary);
@@ -123,11 +140,14 @@ namespace Lcd {
         lcd.createChar(bottom_pole, bottom_pole_binary);
         lcd.createChar(degree_symbol, degree_symbol_binary);
     }
-
+    
     void logic() {
         on_and_off();
         states();
     }
+    #pragma endregion
+
+    #pragma region Base LCD Logic
 
     void on_and_off() {
 
@@ -168,12 +188,12 @@ namespace Lcd {
             break;
 
             case State::ShowingWelcomeMessage:
-                draw_scrolling_message("Welcome!");
+                draw_scrolling_message(F("Welcome!"));
                 current_state = State::Idle;
             break;
             
             case State::Idle:
-                draw_message("Press Any button!", 2, 0);
+                draw_message(F("Press Any button!"), 2, 0);
             break;
             
             case State::InMainMenu:
@@ -200,9 +220,37 @@ namespace Lcd {
                 in_leds_menu(leds_menu);
             break;
 
+            case State::InChangeLEDStateMenu:
+                in_change_led_state_menu(change_led_state_menu);
+            break;
+            
+            case State::InLEDStateMenu:
+                in_led_state_menu(led_state_menu);
+            break;
+
+            case State::InColorChange:
+                in_color_change_menu(color_change_menu);
+            break;
+
+            case State::InColorRedStage:
+                in_color_change_menu(color_change_menu);
+            break;
+
+            case State::InColorGreenStage:
+                in_color_change_menu(color_change_menu);
+            break;
+
+            case State::InColorBlueStage:
+                in_color_change_menu(color_change_menu);
+            break;
+            
+            case State::InRGBLEDStateMenu:
+                in_rgb_led_state_menu(rgb_led_state_menu);
+            break;
+
             case State::ShuttingOff:
                 delay(150);
-                draw_message("Shutting Off!", 2, 0, false);
+                draw_message(F("Shutting Off!"), 2, 0, false);
                 turn_off();
             break;
         }
@@ -218,6 +266,9 @@ namespace Lcd {
             LEDS::blue_led.current_mode = LEDS::LEDMode::Off;
         }
     }
+    #pragma endregion
+
+    #pragma region LCD Menus
 
     void in_main_menu(Menu &menu) {
         
@@ -229,12 +280,12 @@ namespace Lcd {
             
             if (menu.current_pos == 1 || menu.current_pos == 2)
             {
-                draw_menu("Thermometer", "Music", menu.current_pos, menu.options_size);
+                draw_menu(F("Thermometer"), F("Music"), menu.current_pos, menu.options_size);
                 
             }
             else if (menu.current_pos == 3 || menu.current_pos == 4)
             {
-                draw_menu("LEDs", "Shutdown", menu.current_pos, menu.options_size);
+                draw_menu(F("LEDs"), F("Shutdown"), menu.current_pos, menu.options_size);
             }
             
             menu.needs_refresh = false;
@@ -255,7 +306,6 @@ namespace Lcd {
                 break;
                 
                 case Lcd::MainMenuOptions::Shutdown:
-                Serial.print(F("auto shutdown"));
                 menu.needs_refresh = true;
                 menu.current_pos = 1;
                 current_state = State::ShuttingOff;
@@ -300,7 +350,7 @@ namespace Lcd {
         
         if (menu.needs_refresh == true) {
             if (menu.current_pos == 1 || menu.current_pos == 2) {
-                draw_menu("Fuer Elise", "Harry Potter", menu.current_pos, menu.options_size);
+                draw_menu(F("Fuer Elise"), F("Harry Potter"), menu.current_pos, menu.options_size);
             }
             menu.needs_refresh = false;
         }
@@ -334,14 +384,15 @@ namespace Lcd {
         if (menu.needs_refresh == true) {
             
             if (menu.current_pos == 1 || menu.current_pos == 2) {
-                draw_menu("Turn On", "Turn Off", menu.current_pos, menu.options_size);
+                draw_menu(F("Turn On"), F("Turn Off"), menu.current_pos, menu.options_size);
             }
             else if (menu.current_pos == 3 || menu.current_pos == 4) {
-                draw_menu("LED state", "RGB state", menu.current_pos, menu.options_size);
+                draw_menu(F("LEDs state"), F("Change color"), menu.current_pos, menu.options_size);
             }
             else if (menu.current_pos == 5 || menu.current_pos == 6) {
-                draw_menu("Change color", "Fade duration", menu.current_pos, menu.options_size);
+                draw_menu(F("Fade duration"), F("Reset All"), menu.current_pos, menu.options_size);
             }
+
             menu.needs_refresh = false;
         }
         
@@ -355,16 +406,12 @@ namespace Lcd {
                     current_state = State::InTurnOffMenu;
                 break;
                 
-                case Lcd::LedsOptions::ChangeLEDState:
-                    // OM ToDo: Build the menu für choosing which led and state to set.
-                break;
-                
-                case Lcd::LedsOptions::ChangeRGBState:
-                    // OM ToDo: Build the menu für choosing which rgb and state to set.
+                case Lcd::LedsOptions::LEDsState:
+                    current_state = State::InChangeLEDStateMenu;
                 break;
                 
                 case Lcd::LedsOptions::ChangeColor:
-                    // OM ToDo: Build the menu für choosing the new RGB Colors.
+                    current_state = State::InColorChange;
                 break;
                 
                 case Lcd::LedsOptions::ChangeFadeDuration:
@@ -388,16 +435,21 @@ namespace Lcd {
         
         if (menu.needs_refresh == true) {
             if (menu.current_pos == 1 || menu.current_pos == 2) {
-                draw_menu("Orange LED", "Blue LED", menu.current_pos, menu.options_size);
+                draw_menu(F("White LED"), F("Orange LED"), menu.current_pos, menu.options_size);
             }
             else if (menu.current_pos == 3 || menu.current_pos == 4) {
-                draw_menu("White LED", "RGB LED", menu.current_pos, menu.options_size);
+                draw_menu(F("Blue LED"), F("RGB LED"), menu.current_pos, menu.options_size);
             }
             menu.needs_refresh = false;
         }
 
         if (menu.option_clicked == true) {
             switch (static_cast<AvailableLEDsOptions>(menu.current_pos)) {
+                case Lcd::AvailableLEDsOptions::WhiteLED:
+                    LEDS::white_led.current_mode = LEDS::LEDMode::On;
+                    LEDS::white_led.manually_turned_on = true;
+                break;
+
                 case Lcd::AvailableLEDsOptions::OrangeLED:
                     LEDS::orange_led.current_mode = LEDS::LEDMode::On;
                     LEDS::orange_led.manually_turned_on = true;
@@ -408,10 +460,6 @@ namespace Lcd {
                     LEDS::blue_led.manually_turned_on = true;
                 break;
                 
-                case Lcd::AvailableLEDsOptions::WhiteLED:
-                    LEDS::white_led.current_mode = LEDS::LEDMode::On;
-                    LEDS::white_led.manually_turned_on = true;
-                break;
                 case Lcd::AvailableLEDsOptions::RGBLED:
                     LEDS::rgb_led.current_mode = LEDS::RGBMode::Constant;
                     LEDS::rgb_led.manually_turned_on = true;
@@ -432,16 +480,21 @@ namespace Lcd {
         
         if (menu.needs_refresh == true) {
             if (menu.current_pos == 1 || menu.current_pos == 2) {
-                draw_menu("Orange LED", "Blue LED", menu.current_pos, menu.options_size);
+                draw_menu(F("White LED"), F("Orange LED"), menu.current_pos, menu.options_size);
             }
             else if (menu.current_pos == 3 || menu.current_pos == 4) {
-                draw_menu("RGB LED", "White LED", menu.current_pos, menu.options_size);
+                draw_menu(F("Blue LED"), F("RGB LED"), menu.current_pos, menu.options_size);
             }
             menu.needs_refresh = false;
         }
         
         if (menu.option_clicked == true) {
             switch (static_cast<AvailableLEDsOptions>(menu.current_pos)) {
+                case Lcd::AvailableLEDsOptions::WhiteLED:
+                    LEDS::white_led.current_mode = LEDS::LEDMode::Off;
+                    LEDS::white_led.manually_turned_off = true;
+                break;
+
                 case Lcd::AvailableLEDsOptions::OrangeLED:
                     LEDS::orange_led.current_mode = LEDS::LEDMode::Off;
                     LEDS::orange_led.manually_turned_off = true;
@@ -452,10 +505,6 @@ namespace Lcd {
                     LEDS::blue_led.manually_turned_off = true;
                 break;
                 
-                case Lcd::AvailableLEDsOptions::WhiteLED:
-                    LEDS::white_led.current_mode = LEDS::LEDMode::Off;
-                    LEDS::white_led.manually_turned_off = true;
-                break;
                 case Lcd::AvailableLEDsOptions::RGBLED:
                     LEDS::rgb_led.current_mode = LEDS::RGBMode::Off;
                     LEDS::rgb_led.manually_turned_off = true;
@@ -466,6 +515,216 @@ namespace Lcd {
         }
         update_menu_inputs(menu);
     }
+
+    void in_change_led_state_menu(Menu &menu) {
+
+        if (menu_closed(menu, State::InLedsMenu, &leds_menu)) {
+            return;
+        }
+
+        if (menu.needs_refresh == true) {
+            if (menu.current_pos == 1 || menu.current_pos == 2) {
+                draw_menu(F("White LED"), F("Orange LED"), menu.current_pos, menu.options_size);
+            }
+            else if (menu.current_pos == 3 || menu.current_pos == 4) {
+                draw_menu(F("Blue LED"), F("RGB LED"), menu.current_pos, menu.options_size);
+            }
+
+            menu.needs_refresh = false;
+        }
+
+        if (menu.option_clicked == true) {
+            switch (static_cast<AvailableLEDsOptions>(menu.current_pos)) {
+
+                case AvailableLEDsOptions::WhiteLED:
+                    target_led = &LEDS::white_led;
+                    current_state = State::InLEDStateMenu;
+                break;
+
+                case AvailableLEDsOptions::OrangeLED:
+                    target_led = &LEDS::orange_led;
+                    current_state = State::InLEDStateMenu;
+                break;
+
+                case AvailableLEDsOptions::BlueLED:
+                    target_led = &LEDS::blue_led;
+                    current_state = State::InLEDStateMenu;
+                break;
+
+                case AvailableLEDsOptions::RGBLED:
+                    target_rgb_led = &LEDS::rgb_led;
+                    current_state = State::InRGBLEDStateMenu;
+                break;
+            }
+
+            menu.option_clicked = false;
+        }
+
+        update_menu_inputs(menu);
+    }
+
+
+    void in_led_state_menu(Menu &menu) {
+        if (menu_closed(menu, State::InChangeLEDStateMenu, &change_led_state_menu)) {
+            return;
+        }
+
+        if (menu.needs_refresh == true) {
+            if (menu.current_pos == 1 || menu.current_pos == 2) {
+                draw_menu(F("Off"), F("On"), menu.current_pos, menu.options_size);
+            } 
+            else if (menu.current_pos == 3 || menu.current_pos == 4) {
+                draw_menu(F("Blink"), F("Fade"), menu.current_pos, menu.options_size);
+            }
+
+            menu.needs_refresh = false;
+        }
+
+        if (menu.option_clicked == true && target_led != nullptr) {
+            switch (static_cast<AvailableLEDsStatesOptions>(menu.current_pos)) {
+                case Lcd::AvailableLEDsStatesOptions::Off:
+                    target_led->current_mode = LEDS::LEDMode::Off;
+                break;
+
+                case AvailableLEDsStatesOptions::On:
+                    target_led->current_mode = LEDS::LEDMode::On;
+                break;
+
+                case AvailableLEDsStatesOptions::Blink:
+                    target_led->current_mode = LEDS::LEDMode::Blink;
+                break;
+
+                case AvailableLEDsStatesOptions::Fade:
+                    target_led->current_mode = LEDS::LEDMode::Fade;
+                break;
+            }
+
+            menu.option_clicked = false;
+        }
+
+        update_menu_inputs(menu);
+    }
+
+    void in_rgb_led_state_menu(Menu &menu) {
+        
+        if (menu_closed(menu, State::InChangeLEDStateMenu, &change_led_state_menu)) {
+            return;
+        }
+
+        if (menu.needs_refresh == true) {
+            if (menu.current_pos == 1 || menu.current_pos == 2) {
+                draw_menu(F("Off"), F("Constant"), menu.current_pos, menu.options_size);
+            } 
+            else if (menu.current_pos == 3 || menu.current_pos == 4) {
+                draw_menu(F("Blink"), F("Fade"), menu.current_pos, menu.options_size);
+            }
+            else if (menu.current_pos == 5 || menu.current_pos == 6) {
+                draw_menu(F("Random"), F("Remote"), menu.current_pos, menu.options_size);
+            }
+
+            menu.needs_refresh = false;
+        }
+
+        if (menu.option_clicked == true && target_rgb_led != nullptr) {
+            switch (static_cast<AvailableRGBLEDsStatesOptions>(menu.current_pos)) {
+                case Lcd::AvailableRGBLEDsStatesOptions::Off:
+                    target_rgb_led->current_mode = LEDS::RGBMode::Off;
+                break;
+
+                case AvailableRGBLEDsStatesOptions::Constant:
+                    target_rgb_led->current_mode = LEDS::RGBMode::Constant;
+                break;
+
+                case AvailableRGBLEDsStatesOptions::Blink:
+                    target_rgb_led->current_mode = LEDS::RGBMode::Blink;
+                break;
+
+                case AvailableRGBLEDsStatesOptions::Fade:
+                    target_rgb_led->current_mode = LEDS::RGBMode::Fade;
+                break;
+
+                case AvailableRGBLEDsStatesOptions::Random:
+                    target_rgb_led->current_mode = LEDS::RGBMode::Random;
+                break;
+
+                case AvailableRGBLEDsStatesOptions::Remote:
+                    target_rgb_led->current_mode = LEDS::RGBMode::Remote;
+                break;
+            }
+
+            menu.option_clicked = false;
+        }
+
+        update_menu_inputs(menu);
+    }
+
+    void in_color_change_menu(Menu &menu) {
+        if (menu_closed(menu, State::InLedsMenu, &leds_menu)) {
+            return;
+        }
+
+        if (menu.needs_refresh == true) {
+            if (menu.current_pos == 1 || menu.current_pos == 2) {
+                draw_menu(F("Red"), F("Green"), menu.current_pos, menu.options_size);
+            } 
+            else if (menu.current_pos == 3 || menu.current_pos == 4) {
+                draw_menu(F("Blue"), F("Cyan"), menu.current_pos, menu.options_size);
+            }
+            else if (menu.current_pos == 5 || menu.current_pos == 6) {
+                draw_menu(F("Pink"), F("Custom"), menu.current_pos, menu.options_size);
+            }
+
+            menu.needs_refresh = false;
+        }
+
+        if (menu.option_clicked == true) {
+
+            switch (static_cast<AvailableColorsOptions>(menu.current_pos)) {
+
+                case Lcd::AvailableColorsOptions::Red:
+                    LEDS::change_color(255, 0, 0);
+                break;
+
+                case Lcd::AvailableColorsOptions::Green:
+                    LEDS::change_color(0, 255, 0);
+                break;
+
+                case Lcd::AvailableColorsOptions::Blue:
+                    LEDS::change_color(0, 0, 255);
+                break;
+
+                case Lcd::AvailableColorsOptions::Cyan:
+                    LEDS::change_color(0, 255, 255);
+                break;
+
+                case Lcd::AvailableColorsOptions::Pink:
+                    LEDS::change_color(255, 0, 255);
+                break;
+
+                case Lcd::AvailableColorsOptions::Custom:
+                    current_state = State::InColorRedStage;
+                    in_colors_change_stage(menu);
+                break;
+            
+            }
+            menu.option_clicked = false;
+        }
+
+        update_menu_inputs(menu);
+    }
+
+    void in_colors_change_stage(Menu &menu) {
+        if (menu_closed(menu, State::InLedsMenu, &leds_menu)) {
+            return;
+        }
+
+        if (menu.needs_refresh == true) {
+            
+        }
+    }
+    #pragma endregion
+
+    #pragma region Helper Methods
     
     bool menu_closed(Menu &menu, State target_state, Menu* target_menu) {
         if (menu.menu_existed == true) {
@@ -525,7 +784,7 @@ namespace Lcd {
         }
     }
 
-    void draw_menu(const char *first_option, const char *second_option, uint8_t current_pos, uint8_t menu_size)
+    void draw_menu(const __FlashStringHelper *first_option, const __FlashStringHelper *second_option, uint8_t current_pos, uint8_t menu_size)
     {
         lcd.clear();
 
@@ -543,7 +802,10 @@ namespace Lcd {
         {
             lcd.write(arrow);
         }
-        lcd.print(second_option);
+
+        if (second_option != nullptr) {
+            lcd.print(second_option);
+        }
 
         // OM: We exit since there is only two options.
         if (menu_size <= 2) {
@@ -573,7 +835,7 @@ namespace Lcd {
     }
     
     
-    void draw_scrolling_message(const char *message, uint8_t start_col, uint8_t start_row, uint32_t delay_time) {
+    void draw_scrolling_message(const __FlashStringHelper *message, uint8_t start_col, uint8_t start_row, uint32_t delay_time) {
 
         if (start_col < Config::LCD_WIDTH) {
 
@@ -605,7 +867,7 @@ namespace Lcd {
         lcd.setCursor(0, 0);
     }
 
-    void draw_message(const char *message, uint8_t col_pos, uint8_t row_pos, bool repeat, uint32_t delay_time) {
+    void draw_message(const __FlashStringHelper *message, uint8_t col_pos, uint8_t row_pos, bool repeat, uint32_t delay_time) {
         // OM ToDo: later make the message actually appear based on the lentgh of the message.
         bool text_visible = true;
         uint32_t last_blink_time = millis();
@@ -643,4 +905,5 @@ namespace Lcd {
         lcd.clear();
         Timer::stop();
     }
+    #pragma endregion
 }

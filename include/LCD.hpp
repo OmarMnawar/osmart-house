@@ -16,16 +16,23 @@ namespace Lcd {
 
   enum class State
   {
-      NoAction,
-      ShowingWelcomeMessage,
-      Idle,
-      InMainMenu,
-      InThermometerMenu,
-      InMusicMenu,
-      InLedsMenu,
-      InTurnOnMenu,
-      InTurnOffMenu,
-      ShuttingOff
+      NoAction = 0,
+      ShowingWelcomeMessage = 1,
+      Idle = 2,
+      InMainMenu = 3,
+      InThermometerMenu = 4,
+      InMusicMenu = 5,
+      InLedsMenu = 6,
+      InTurnOnMenu = 7,
+      InTurnOffMenu = 8,
+      InChangeLEDStateMenu = 9,
+      InLEDStateMenu = 10,
+      InRGBLEDStateMenu = 11,
+      InColorChange = 12,
+      InColorRedStage = 13,
+      InColorGreenStage = 14,
+      InColorBlueStage = 15,
+      ShuttingOff = 16
   };
 
   
@@ -44,19 +51,49 @@ namespace Lcd {
   enum class LedsOptions : uint8_t {
     TurnOn = 1,
     TurnOff = 2,
-    ChangeColor = 3,
-    ChangeLEDState = 4,
-    ChangeRGBState = 5,
-    ChangeFadeDuration = 6,
-    ResetAll = 7
+    LEDsState = 3,
+    ChangeColor = 4,
+    ChangeFadeDuration = 5,
+    ResetAll = 6
   };
   
   
   enum class AvailableLEDsOptions : uint8_t {
-    OrangeLED = 1,
-    BlueLED = 2,
-    WhiteLED = 3,
+    WhiteLED = 1,
+    OrangeLED = 2,
+    BlueLED = 3,
     RGBLED = 4,
+  };
+
+  enum class AvailableLEDsStatesOptions : uint8_t {
+    Off = 1,
+    On = 2,
+    Blink = 3,
+    Fade = 4
+  };
+
+  enum class AvailableRGBLEDsStatesOptions : uint8_t {
+    Off = 1,
+    Constant = 2,
+    Blink = 3,
+    Fade = 4,
+    Random = 5,
+    Remote = 6
+  };
+
+  enum class AvailableColorsOptions : uint8_t {
+    Red = 1,
+    Green = 2,
+    Blue = 3,
+    Cyan = 4,
+    Pink = 5,
+    Custom = 6
+  };
+
+  enum class ColorStages : uint8_t {
+    Red = 0,
+    Green = 1,
+    Blue = 2
   };
   
   extern PowerState current_power_state;
