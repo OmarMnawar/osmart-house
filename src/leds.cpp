@@ -1,26 +1,27 @@
 #include <Arduino.h>
 #include <avr/interrupt.h>
-#include "LEDS.hpp"
-#include "Inputs.hpp"
-#include "States.hpp"
+#include "leds.hpp"
+#include "inputs.hpp"
+#include "remote.hpp"
+#include "sensor.hpp"
 
 
-namespace LEDS {
-    SimpleLED orange_led = { Pins::LED_ORANGE_OFF_PIN, LEDMode::Off };
-    SimpleLED blue_led = { Pins::LED_BLUE_ON_PIN, LEDMode::Off };
-    SimpleLED white_led = { Pins::LED_WHITE_PIN, LEDMode::Off };
-    RGBLED rgb_led = {0, 0, 0, Pins::LED_RED_PIN, Pins::LED_GREEN_PIN, Pins::LED_BLUE_PIN, RGBMode::Remote };
+namespace leds {
+    simple_led orange_led = { pins::LED_ORANGE_OFF_PIN, led_mode::off };
+    simple_led blue_led = { pins::LED_BLUE_ON_PIN, led_mode::off };
+    simple_led white_led = { pins::LED_WHITE_PIN, led_mode::off };
+    rgb_led main_rgb_led = {0, 0, 0, pins::LED_RED_PIN, pins::LED_GREEN_PIN, pins::LED_BLUE_PIN, rgb_mode::remote };
 
     void write_color(uint8_t red, uint8_t green, uint8_t blue);
-    void turn_on(SimpleLED* led = nullptr, RGBLED* rgb_led = nullptr);
-    void turn_off(SimpleLED* led = nullptr, RGBLED* rgb_led = nullptr);
-    void quick_blink(SimpleLED* led = nullptr, RGBLED* rgb_led = nullptr);
-    void start_blinking(RGBLED* rgb_led = nullptr, SimpleLED* led = nullptr);
-    void start_fade(RGBLED* rgb_led = nullptr, SimpleLED* led = nullptr);
-    void start_random(RGBLED* rgb_led);
-    void handle_led_mode(SimpleLED* led);
-    void handle_led_mode(RGBLED* rgb_led);
-    void reset_led(SimpleLED* led = nullptr, RGBLED* rgb_led = nullptr);
+    void turn_on(simple_led* led = nullptr, rgb_led* rgb_led = nullptr);
+    void turn_off(simple_led* led = nullptr, rgb_led* rgb_led = nullptr);
+    void quick_blink(simple_led* led = nullptr, rgb_led* rgb_led = nullptr);
+    void start_blinking(rgb_led* rgb_led = nullptr, simple_led* led = nullptr);
+    void start_fade(rgb_led* rgb_led = nullptr, simple_led* led = nullptr);
+    void start_random(rgb_led* rgb);
+    void handle_led_mode(simple_led* led);
+    void handle_led_mode(rgb_led* rgb);
+    void reset_led(simple_led* led = nullptr, rgb_led* rgb_led = nullptr);
     void standard_rgb_color();
 
     void init() {
@@ -28,8 +29,8 @@ namespace LEDS {
         pinMode(blue_led.pin, OUTPUT);
         pinMode(orange_led.pin, OUTPUT);
 
-        for (uint8_t i = 0; i < sizeof(rgb_led.PINS) / sizeof(rgb_led.PINS[0]); i++) {
-            pinMode(rgb_led.PINS[i], OUTPUT);
+        for (uint8_t i = 0; i < sizeof(main_rgb_led.PINS) / sizeof(main_rgb_led.PINS[0]); i++) {
+            pinMode(main_rgb_led.PINS[i], OUTPUT);
         }
     }
 
@@ -38,23 +39,23 @@ namespace LEDS {
         handle_led_mode(&white_led);
         handle_led_mode(&orange_led);
         handle_led_mode(&blue_led);
-        handle_led_mode(&rgb_led);
+        handle_led_mode(&main_rgb_led);
 
         // OM ToDo: Come back to this later.
 
-        if (Sensor::current_state == Sensor::States::NoMovementDetected) {
+        if (sensor::current_state == sensor::states::no_movement_detected) {
             if (white_led.manually_turned_on == false) {
                 turn_off(&white_led);
             }
         }
-        else if (Sensor::current_state == Sensor::States::MovementDetected) {
+        else if (sensor::current_state == sensor::states::movement_detected) {
             if (white_led.manually_turned_off == false) {
                 turn_on(&white_led);
             }
         }
     }
 
-    void turn_on(SimpleLED* led, RGBLED* rgb_led) {
+    void turn_on(simple_led* led, rgb_led* rgb_led) {
 
         if (led == nullptr && rgb_led == nullptr) {
             return;
@@ -62,7 +63,7 @@ namespace LEDS {
 
         if (led != nullptr) {
             digitalWrite(led->pin, HIGH);
-            led->current_mode = LEDMode::On;
+            led->current_mode = led_mode::on;
         }
 
         if (rgb_led != nullptr) {
@@ -73,11 +74,11 @@ namespace LEDS {
             else {
                 write_color(rgb_led->red, rgb_led->green, rgb_led->blue);
             }
-            rgb_led->current_mode = RGBMode::Constant;
+            rgb_led->current_mode = rgb_mode::constant;
         }
     }
 
-    void turn_off(SimpleLED* led, RGBLED* rgb_led) {
+    void turn_off(simple_led* led, rgb_led* rgb_led) {
         
         if (led == nullptr && rgb_led == nullptr) {
             return;
@@ -85,16 +86,16 @@ namespace LEDS {
 
         if (led != nullptr) {
             digitalWrite(led->pin, LOW);
-            led->current_mode = LEDMode::Off;
+            led->current_mode = led_mode::off;
         }
 
         if (rgb_led != nullptr) {
             write_color(0, 0, 0);
-            rgb_led->current_mode = RGBMode::Off;
+            rgb_led->current_mode = rgb_mode::off;
         }
     }
 
-    void quick_blink(SimpleLED* led, RGBLED* rgb_led) {
+    void quick_blink(simple_led* led, rgb_led* rgb_led) {
         if (led == nullptr && rgb_led == nullptr) {
             return;
         }
@@ -132,52 +133,52 @@ namespace LEDS {
         }
     }
 
-    void handle_led_mode(SimpleLED* led) {
+    void handle_led_mode(simple_led* led) {
 
         switch (led->current_mode) {
-            case LEDS::LEDMode::Off:
+            case led_mode::off:
                 turn_off(led);
             return;
 
-            case LEDMode::On:
+            case led_mode::on:
                 turn_on(led);
             break;
             
-            case LEDMode::Blink:
+            case led_mode::blink:
                 start_blinking(nullptr, led);
             break;
 
-            case LEDMode::Fade:
+            case led_mode::fade:
                 start_fade(nullptr, led);
             break;
         }
     }
 
-    void handle_led_mode(RGBLED* rgb_led) {
+    void handle_led_mode(rgb_led* rgb_led) {
 
         switch (rgb_led->current_mode) {
-            case RGBMode::Off:
+            case rgb_mode::off:
                 turn_off(nullptr, rgb_led);
             return;
 
-            case RGBMode::Constant:
+            case rgb_mode::constant:
                 turn_on(nullptr, rgb_led);
             break;
             
-            case RGBMode::Blink:
+            case rgb_mode::blink:
                 start_blinking(rgb_led);
             break;
 
-            case RGBMode::Fade:
+            case rgb_mode::fade:
                 start_fade(rgb_led);
             break;
 
-            case RGBMode::Random:
+            case rgb_mode::random:
                 start_random(rgb_led);
             break;
 
-            case RGBMode::Remote:
-                if (Remote::current_button != Remote::Buttons::None && rgb_led->current_mode == RGBMode::Remote) {
+            case rgb_mode::remote:
+                if (remote::current_button != remote::buttons::none && rgb_led->current_mode == rgb_mode::remote) {
                     quick_blink(nullptr, rgb_led);
                 }
 
@@ -188,7 +189,7 @@ namespace LEDS {
         }
     }
 
-    void start_blinking(RGBLED* rgb_led, SimpleLED* led) {
+    void start_blinking(rgb_led* rgb_led, simple_led* led) {
 
         if (rgb_led == nullptr && led == nullptr) {
             return;
@@ -198,7 +199,7 @@ namespace LEDS {
     }
 
  
-    void start_fade(RGBLED* rgb_led, SimpleLED* led) {
+    void start_fade(rgb_led* rgb_led, simple_led* led) {
         if (rgb_led == nullptr && led == nullptr) {
             return;
         }
@@ -273,10 +274,10 @@ namespace LEDS {
         reset_led(&white_led);
         reset_led(&orange_led);
         reset_led(&blue_led);
-        reset_led(nullptr, &rgb_led);
+        reset_led(nullptr, &main_rgb_led);
     }
 
-    void reset_led(SimpleLED* led, RGBLED* rgb_led) {
+    void reset_led(simple_led* led, rgb_led* rgb_led) {
 
         if (led == nullptr && rgb_led == nullptr) {
             return;
@@ -286,7 +287,7 @@ namespace LEDS {
             led->on = true;
             led->manually_turned_off = false;
             led->manually_turned_on = false;
-            led->current_mode = LEDMode::Off;
+            led->current_mode = led_mode::off;
             led->fade_duration = 30;
             led->blink_intervall = 500;
             led->brightness_level = 0;
@@ -298,7 +299,7 @@ namespace LEDS {
             rgb_led->on = true;
             rgb_led->manually_turned_off = false;
             rgb_led->manually_turned_on = false;
-            rgb_led->current_mode = RGBMode::Off;
+            rgb_led->current_mode = rgb_mode::off;
             rgb_led->fade_duration = 10;
             rgb_led->blink_intervall = 500;
             rgb_led->random_change_intervall = 1000;
@@ -309,7 +310,7 @@ namespace LEDS {
         }
     }
 
-    void start_random(RGBLED* rgb_led) {
+    void start_random(rgb_led* rgb_led) {
 
         if (rgb_led == nullptr) {
             return;
@@ -329,16 +330,16 @@ namespace LEDS {
     }
     
     void write_color(uint8_t red, uint8_t green, uint8_t blue) {
-        analogWrite(rgb_led.PINS[0], red);
-        analogWrite(rgb_led.PINS[1], green);
-        analogWrite(rgb_led.PINS[2], blue);
+        analogWrite(main_rgb_led.PINS[0], red);
+        analogWrite(main_rgb_led.PINS[1], green);
+        analogWrite(main_rgb_led.PINS[2], blue);
     }
 
     void change_color(uint8_t red, uint8_t green, uint8_t blue) {
         write_color(red, green, blue);
-        rgb_led.red = red;
-        rgb_led.green = green;
-        rgb_led.blue = blue;
+        main_rgb_led.red = red;
+        main_rgb_led.green = green;
+        main_rgb_led.blue = blue;
     }
 
     void standard_rgb_color() {

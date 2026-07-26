@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-namespace Timer {
+namespace timer {
     void start();
     void stop();
     bool is_time_reached(uint32_t goal_time);

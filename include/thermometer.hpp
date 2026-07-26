@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-namespace Thermometer {
+namespace thermometer {
     void update_thermometer();
     extern bool temperature_updated;
     extern int16_t temperature_celsius;

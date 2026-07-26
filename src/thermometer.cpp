@@ -1,7 +1,7 @@
-#include "Thermometer.hpp"
-#include "Inputs.hpp"
+#include "thermometer.hpp"
+#include "inputs.hpp"
 
-namespace Thermometer {
+namespace thermometer {
 
     int16_t temperature_celsius = 0;
     int16_t last_measurement = 0;
@@ -9,7 +9,7 @@ namespace Thermometer {
     bool temperature_updated = false;
 
     void update_thermometer() {
-        int16_t value_reading = analogRead(Pins::THERMOMETER_PIN);
+        int16_t value_reading = analogRead(pins::THERMOMETER_PIN);
 
         // temperature_celsius = map(value_reading, 0, 1024, -50, 150);
 

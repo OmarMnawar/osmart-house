@@ -1,7 +1,7 @@
 #include <Arduino.h>
-#include "Timer.hpp"
+#include "timer.hpp"
 
-namespace Timer {
+namespace timer {
 
     uint32_t start_time = 0;
 
