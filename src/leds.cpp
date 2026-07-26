@@ -7,10 +7,10 @@
 
 
 namespace leds {
-    simple_led orange_led = { pins::LED_ORANGE_OFF_PIN, led_mode::off };
-    simple_led blue_led = { pins::LED_BLUE_ON_PIN, led_mode::off };
-    simple_led white_led = { pins::LED_WHITE_PIN, led_mode::off };
-    rgb_led main_rgb_led = {0, 0, 0, pins::LED_RED_PIN, pins::LED_GREEN_PIN, pins::LED_BLUE_PIN, rgb_mode::remote };
+    simple_led orange_led = { pins::LED_ORANGE, led_mode::off };
+    simple_led blue_led = { pins::LED_BLUE, led_mode::off };
+    simple_led white_led = { pins::LED_WHITE, led_mode::off };
+    rgb_led main_rgb_led = {0, 0, 0, pins::RGB_LED_RED, pins::RGB_LED_GREEN, pins::RGB_LED_BLUE, rgb_mode::remote };
 
     void write_color(uint8_t red, uint8_t green, uint8_t blue);
     void turn_on(simple_led* led = nullptr, rgb_led* rgb_led = nullptr);

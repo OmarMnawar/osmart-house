@@ -4,6 +4,10 @@
 
 namespace lcd {
 
+
+    void append_digit(color_stage &stage, char digit_char);
+
+    
     void update_menu_inputs(menu &menu) {
 
         if (remote::current_button == remote::buttons::plus)
@@ -89,6 +93,15 @@ namespace lcd {
             stage.needs_refresh = true;
         }
 
+    }
+
+    void append_digit(color_stage &stage, char digit_char) {
+        if (stage.digit_count >= 3) {
+            return;
+        }
+        stage.display_color_value[stage.digit_count] = digit_char;
+        stage.digit_count++;
+        stage.display_color_value[stage.digit_count] = '\0';
     }
 
 }

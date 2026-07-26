@@ -3,6 +3,7 @@
 #include "leds.hpp"
 #include "sensor.hpp"
 #include "remote.hpp"
+#include "speaker.hpp"
 #include "thermometer.hpp"
 
 
@@ -16,9 +17,11 @@ void setup()
 
 void loop()
 {
+
   sensor::update_state();
   remote::update_buttons();
   leds::logic();
   lcd::logic();
+  speaker::handle_sounds_playing();
   thermometer::update_thermometer();
 }

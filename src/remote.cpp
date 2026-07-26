@@ -1,17 +1,19 @@
 #include "remote.hpp"
 #include <Arduino.h>
 #include "inputs.hpp"
-#include "timer.hpp"
+
+#define IR_USE_AVR_TIMER1
 #include <IRremote.hpp>
 
 namespace remote {
     buttons current_button = buttons::none;
 
     uint32_t button_hex_code = 0;
+	uint32_t last_press_time = 0;
 
     void init() {
         Serial.begin(9600);
-        IrReceiver.begin(pins::REMOTE_PIN);
+        IrReceiver.begin(pins::REMOTE);
     }
 
     void update_buttons() {
@@ -94,17 +96,15 @@ namespace remote {
 
 		    }
 		    IrReceiver.resume();
-			// Serial.println(button_hex_code, HEX);
-            
-            timer::start();
+            last_press_time = millis();
 	    }
 
 
-        if (current_button != buttons::none && timer::is_time_reached(10))
+        if (current_button != buttons::none && millis() - last_press_time >= 10)
         {
             current_button = buttons::none;
         }
 
-        timer::stop();
+		last_press_time = 0;
     }
 }

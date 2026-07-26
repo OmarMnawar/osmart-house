@@ -9,7 +9,7 @@ namespace thermometer {
     bool temperature_updated = false;
 
     void update_thermometer() {
-        int16_t value_reading = analogRead(pins::THERMOMETER_PIN);
+        int16_t value_reading = analogRead(pins::THERMOMETER);
 
         // temperature_celsius = map(value_reading, 0, 1024, -50, 150);
 

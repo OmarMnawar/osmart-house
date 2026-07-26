@@ -7,11 +7,11 @@ namespace sensor {
 	states current_state = states::no_movement_detected;
 
 	void init() {
-		pinMode(pins::SENSOR_PIN, INPUT);
+		pinMode(pins::SENSOR, INPUT);
 	}
 
 	void update_state() {
-		if (digitalRead(pins::SENSOR_PIN)) {
+		if (digitalRead(pins::SENSOR)) {
 			current_state = states::movement_detected;
 		}
 		else {
