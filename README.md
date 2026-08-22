@@ -24,7 +24,6 @@ My goal was to build a comprehensive, visual, and highly interactive system that
 *   **IR Remote Control:** Wireless manipulation of the house features (lights, music, menus) using a standard infrared remote controller.
 *   **Automated Motion Sensing (Power Save):** Features an integrated PIR motion sensor. The LCD display automatically goes into sleep mode to save energy and wakes up with a custom "Welcome Home" message the moment movement is detected.
 *   **RGB Ambient Lighting:** Customizable mood lighting control directly via the interface.
-*   **Piezo Music Player:** A built-in speaker module capable of playing 8-bit chip-tune melodies selected from the LCD menu.
 
 ---
 
