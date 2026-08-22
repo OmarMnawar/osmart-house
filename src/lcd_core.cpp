@@ -19,7 +19,6 @@ namespace lcd {
 
     void welcoming();
     void idle();
-    void shutting_off();
     void handle_no_interaction();
 
     void init() {
@@ -39,15 +38,15 @@ namespace lcd {
 
             if (remote::current_button != remote::buttons::on_or_off)
             {
-                if (leds::orange_led.manually_turned_off == false) {
+                if (leds::orange_led.manually_turned_off == false || leds::orange_led.manually_turned_on == false) {
                     leds::orange_led.current_mode = leds::led_mode::on;
                 }
                 return;
             }
-            if (leds::orange_led.manually_turned_on == false) {
+            if (leds::orange_led.manually_turned_on == false || leds::orange_led.manually_turned_off == false) {
                 leds::orange_led.current_mode = leds::led_mode::off;
             }
-            if (leds::blue_led.manually_turned_off == false) {
+            if (leds::blue_led.manually_turned_off == false || leds::blue_led.manually_turned_on == false) {
                 leds::blue_led.current_mode = leds::led_mode::on;
             }
             lcd.display();
@@ -70,7 +69,7 @@ namespace lcd {
         current_power_state = power_state::off;
         current_state = states::no_action;
 
-        if (leds::blue_led.manually_turned_on == false) {
+        if (leds::blue_led.manually_turned_on == false || leds::blue_led.manually_turned_off == false) {
             leds::blue_led.current_mode = leds::led_mode::off;
         }
     }

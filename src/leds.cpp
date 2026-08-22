@@ -41,15 +41,15 @@ namespace leds {
         handle_led_mode(&blue_led);
         handle_led_mode(&main_rgb_led);
 
-        // OM ToDo: Come back to this later.
-
-        if (sensor::current_state == sensor::states::no_movement_detected) {
-            if (white_led.manually_turned_on == false) {
+        if (white_led.manually_turned_on == false) {
+            
+            if (sensor::current_state == sensor::states::no_movement_detected) {
                 turn_off(&white_led);
             }
         }
-        else if (sensor::current_state == sensor::states::movement_detected) {
-            if (white_led.manually_turned_off == false) {
+        if (white_led.manually_turned_off == false) {
+
+            if (sensor::current_state == sensor::states::movement_detected) {
                 turn_on(&white_led);
             }
         }

@@ -156,9 +156,9 @@ namespace lcd {
                 break;
                 
                 case main_menu_options::shutdown:
-                menu.needs_refresh = true;
-                menu.current_pos = 1;
-                current_state = states::shutting_down;
+                    menu.needs_refresh = true;
+                    menu.current_pos = 1;
+                    current_state = states::shutting_down;
                 break;
             }
 
@@ -261,24 +261,28 @@ namespace lcd {
                 case available_leds_options::white_led:
                     leds::white_led.current_mode = leds::led_mode::on;
                     leds::white_led.manually_turned_on = true;
+                    leds::white_led.manually_turned_off = false;
                     draw_normal_message(F("LED turned"), F("on!"), 2, 6);
                 break;
 
                 case available_leds_options::orange_led:
                     leds::orange_led.current_mode = leds::led_mode::on;
                     leds::orange_led.manually_turned_on = true;
+                    leds::orange_led.manually_turned_off = false;
                     draw_normal_message(F("LED turned"), F("on!"), 2, 6);
                 break;
                 
                 case available_leds_options::blue_led:
                     leds::blue_led.current_mode = leds::led_mode::on;
                     leds::blue_led.manually_turned_on = true;
+                    leds::blue_led.manually_turned_off = false;
                     draw_normal_message(F("LED turned"), F("on!"), 2, 6);
                 break;
                 
                 case available_leds_options::rgb_led:
                     leds::main_rgb_led.current_mode = leds::rgb_mode::constant;
                     leds::main_rgb_led.manually_turned_on = true;
+                    leds::main_rgb_led.manually_turned_off = false;
                     draw_normal_message(F("RGB turned"), F("on!"), 2, 6);
                 break;
             }
